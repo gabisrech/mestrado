@@ -1,0 +1,312 @@
+##########################
+#######  MESTRADO  #######
+##########################
+
+rm(list=ls())
+
+# Pacotes:
+library(haven)
+library(ggplot2)
+library(dplyr)
+library(esquisse)
+require(naniar)
+### Mediação: 
+require(MBESS)
+require(psych)
+require(mediation)
+require(lavaan)
+require(mma)
+
+# Diretório:
+setwd("C:/Users/gabriela.rech/Desktop/Gabriela/mestrado/pos banca/novos modelos")
+
+# Banco de dados:
+dados <- read_sav("BANCO GABRIELA (1).sav")
+
+dados$interv_cat[dados$INTERV == 1000] <- 1
+dados$interv_cat[dados$INTERV == 2000] <- 2
+dados$interv_cat[dados$INTERV == 3000] <- 3
+dados$interv_cat <- as.factor(dados$interv_cat)
+
+dados$interv_grupo1 <- ifelse(dados$interv_cat == 1, 1, 0)
+dados$interv_grupo2 <- ifelse(dados$interv_cat == 2, 1, 0)
+dados$interv_grupo3 <- ifelse(dados$interv_cat == 3, 1, 0)
+
+#### ACEITAÇÃO:
+#####Semana 0:
+
+#imputação:
+dados$missings_aaq0 = apply(dados[,c("sem0.aaqii.1", "sem0.aaqii.2", "sem0.aaqii.3", "sem0.aaqii.4",
+                                     "sem0.aaqii.5", "sem0.aaqii.6", "sem0.aaqii.7")], 1, function(x) sum(is.na(x)))
+dados$somasemna_aaq0 = apply(dados[,c("sem0.aaqii.1", "sem0.aaqii.2", "sem0.aaqii.3", "sem0.aaqii.4",
+                                      "sem0.aaqii.5", "sem0.aaqii.6", "sem0.aaqii.7")], 1, function(x) sum(x,na.rm=T))
+dados$mediassemna_aaq0 = apply(dados[,c("sem0.aaqii.1", "sem0.aaqii.2", "sem0.aaqii.3", "sem0.aaqii.4",
+                                        "sem0.aaqii.5", "sem0.aaqii.6", "sem0.aaqii.7")], 1, function(x) mean(x,na.rm=T))
+dados$somafinal_aaq0 = ifelse(dados$missings_aaq0 == 0, dados$somasemna_aaq0,
+                              ifelse(dados$missings_aaq0 == 1, dados$somasemna_aaq0 + dados$mediassemna_aaq0, NA))
+#####Semana 5:
+
+#imputação:
+dados$missings_aaq5 = apply(dados[,c("sem5.aaqii.1", "sem5.aaqii.2", "sem5.aaqii.3", "sem5.aaqii.4",
+                                     "sem5.aaqii.5", "sem5.aaqii.6", "sem5.aaqii.7")], 1, function(x) sum(is.na(x)))
+dados$somasemna_aaq5 = apply(dados[,c("sem5.aaqii.1", "sem5.aaqii.2", "sem5.aaqii.3", "sem5.aaqii.4",
+                                      "sem5.aaqii.5", "sem5.aaqii.6", "sem5.aaqii.7")], 1, function(x) sum(x,na.rm=T))
+dados$mediassemna_aaq5 = apply(dados[,c("sem5.aaqii.1", "sem5.aaqii.2", "sem5.aaqii.3", "sem5.aaqii.4",
+                                        "sem5.aaqii.5", "sem5.aaqii.6", "sem5.aaqii.7")], 1, function(x) mean(x,na.rm=T))
+dados$somafinal_aaq5 = ifelse(dados$missings_aaq5 == 0, dados$somasemna_aaq5,
+                              ifelse(dados$missings_aaq5 == 1, dados$somasemna_aaq5 + dados$mediassemna_aaq5, NA))
+
+### SENSIBILIDADE À ANSIEDADE:
+#####Semana 0:
+
+#imputação:
+dados$missings_esa0 = apply(dados[,c("sem0.esa.1", "sem0.esa.2", "sem0.esa.3", "sem0.esa.4", "sem0.esa.5", 
+                                     "sem0.esa.6", "sem0.esa.7", "sem0.esa.8", "sem0.esa.9", "sem0.esa.10",
+                                     "sem0.esa.11", "sem0.esa.12", "sem0.esa.13", "sem0.esa.14", "sem0.esa.15",
+                                     "sem0.esa.16", "sem0.esa.17", "sem0.esa.18", "sem0.esa.19", "sem0.esa.20",
+                                     "sem0.esa.21", "sem0.esa.22", "sem0.esa.23", "sem0.esa.24", "sem0.esa.25",
+                                     "sem0.esa.26", "sem0.esa.27", "sem0.esa.28", "sem0.esa.29", "sem0.esa.30",
+                                     "sem0.esa.31", "sem0.esa.32", "sem0.esa.33", "sem0.esa.34", 
+                                     "sem0.esa.35", "sem0.esa.36")], 1, function(x) sum(is.na(x)))
+dados$somasemna_esa0 = apply(dados[,c("sem0.esa.1", "sem0.esa.2", "sem0.esa.3", "sem0.esa.4", "sem0.esa.5", 
+                                      "sem0.esa.6", "sem0.esa.7", "sem0.esa.8", "sem0.esa.9", "sem0.esa.10",
+                                      "sem0.esa.11", "sem0.esa.12", "sem0.esa.13", "sem0.esa.14", "sem0.esa.15",
+                                      "sem0.esa.16", "sem0.esa.17", "sem0.esa.18", "sem0.esa.19", "sem0.esa.20",
+                                      "sem0.esa.21", "sem0.esa.22", "sem0.esa.23", "sem0.esa.24", "sem0.esa.25",
+                                      "sem0.esa.26", "sem0.esa.27", "sem0.esa.28", "sem0.esa.29", "sem0.esa.30",
+                                      "sem0.esa.31", "sem0.esa.32", "sem0.esa.33", "sem0.esa.34", 
+                                      "sem0.esa.35", "sem0.esa.36")], 1, function(x) sum(x,na.rm=T))
+dados$mediassemna_esa0 = apply(dados[,c("sem0.esa.1", "sem0.esa.2", "sem0.esa.3", "sem0.esa.4", "sem0.esa.5", 
+                                        "sem0.esa.6", "sem0.esa.7", "sem0.esa.8", "sem0.esa.9", "sem0.esa.10",
+                                        "sem0.esa.11", "sem0.esa.12", "sem0.esa.13", "sem0.esa.14", "sem0.esa.15",
+                                        "sem0.esa.16", "sem0.esa.17", "sem0.esa.18", "sem0.esa.19", "sem0.esa.20",
+                                        "sem0.esa.21", "sem0.esa.22", "sem0.esa.23", "sem0.esa.24", "sem0.esa.25",
+                                        "sem0.esa.26", "sem0.esa.27", "sem0.esa.28", "sem0.esa.29", "sem0.esa.30",
+                                        "sem0.esa.31", "sem0.esa.32", "sem0.esa.33", "sem0.esa.34", 
+                                        "sem0.esa.35", "sem0.esa.36")], 1, function(x) mean(x,na.rm=T))
+dados$somafinal_esa0 = ifelse(dados$missings_esa0 == 0, dados$somasemna_esa0,
+                              ifelse(dados$missings_esa0 == 1, dados$somasemna_esa0 + dados$mediassemna_esa0, 
+                                     ifelse(dados$missings_esa0 == 2, dados$somasemna_esa0 + 2*dados$mediassemna_esa0,
+                                            ifelse(dados$missings_esa0 == 3, dados$somasemna_esa0 + 3*dados$mediassemna_esa0,
+                                                   ifelse(dados$missings_esa0 == 4, dados$somasemna_esa0 + 4*dados$mediassemna_esa0,
+                                                          ifelse(dados$missings_esa0 == 5, dados$somasemna_esa0 + 5*dados$mediassemna_esa0,
+                                                                 ifelse(dados$missings_esa0 == 6, dados$somasemna_esa0 + 6*dados$mediassemna_esa0,
+                                                                        ifelse(dados$missings_esa0 == 7, dados$somasemna_esa0 + 7*dados$mediassemna_esa0, NA))))))))
+
+#####Semana 5:
+
+#imputação:
+dados$missings_esa5 = apply(dados[,c("sem5.esa.1", "sem5.esa.2", "sem5.esa.3", "sem5.esa.4", "sem5.esa.5", 
+                                     "sem5.esa.6", "sem5.esa.7", "sem5.esa.8", "sem5.esa.9", "sem5.esa.10",
+                                     "sem5.esa.11", "sem5.esa.12", "sem5.esa.13", "sem5.esa.14", "sem5.esa.15",
+                                     "sem5.esa.16", "sem5.esa.17", "sem5.esa.18", "sem5.esa.19", "sem5.esa.20",
+                                     "sem5.esa.21", "sem5.esa.22", "sem5.esa.23", "sem5.esa.24", "sem5.esa.25",
+                                     "sem5.esa.26", "sem5.esa.27", "sem5.esa.28", "sem5.esa.29", "sem5.esa.30",
+                                     "sem5.esa.31", "sem5.esa.32", "sem5.esa.33", "sem5.esa.34", 
+                                     "sem5.esa.35", "sem5.esa.36")], 1, function(x) sum(is.na(x)))
+dados$somasemna_esa5 = apply(dados[,c("sem5.esa.1", "sem5.esa.2", "sem5.esa.3", "sem5.esa.4", "sem5.esa.5", 
+                                      "sem5.esa.6", "sem5.esa.7", "sem5.esa.8", "sem5.esa.9", "sem5.esa.10",
+                                      "sem5.esa.11", "sem5.esa.12", "sem5.esa.13", "sem5.esa.14", "sem5.esa.15",
+                                      "sem5.esa.16", "sem5.esa.17", "sem5.esa.18", "sem5.esa.19", "sem5.esa.20",
+                                      "sem5.esa.21", "sem5.esa.22", "sem5.esa.23", "sem5.esa.24", "sem5.esa.25",
+                                      "sem5.esa.26", "sem5.esa.27", "sem5.esa.28", "sem5.esa.29", "sem5.esa.30",
+                                      "sem5.esa.31", "sem5.esa.32", "sem5.esa.33", "sem5.esa.34", 
+                                      "sem5.esa.35", "sem5.esa.36")], 1, function(x) sum(x,na.rm=T))
+dados$mediassemna_esa5 = apply(dados[,c("sem5.esa.1", "sem5.esa.2", "sem5.esa.3", "sem5.esa.4", "sem5.esa.5", 
+                                        "sem5.esa.6", "sem5.esa.7", "sem5.esa.8", "sem5.esa.9", "sem5.esa.10",
+                                        "sem5.esa.11", "sem5.esa.12", "sem5.esa.13", "sem5.esa.14", "sem5.esa.15",
+                                        "sem5.esa.16", "sem5.esa.17", "sem5.esa.18", "sem5.esa.19", "sem5.esa.20",
+                                        "sem5.esa.21", "sem5.esa.22", "sem5.esa.23", "sem5.esa.24", "sem5.esa.25",
+                                        "sem5.esa.26", "sem5.esa.27", "sem5.esa.28", "sem5.esa.29", "sem5.esa.30",
+                                        "sem5.esa.31", "sem5.esa.32", "sem5.esa.33", "sem5.esa.34", 
+                                        "sem5.esa.35", "sem5.esa.36")], 1, function(x) mean(x,na.rm=T))
+dados$somafinal_esa5 = ifelse(dados$missings_esa5 == 0, dados$somasemna_esa5,
+                              ifelse(dados$missings_esa5 == 1, dados$somasemna_esa5 + dados$mediassemna_esa5, 
+                                     ifelse(dados$missings_esa5 == 2, dados$somasemna_esa5 + 2*dados$mediassemna_esa5,
+                                            ifelse(dados$missings_esa5 == 3, dados$somasemna_esa5 + 3*dados$mediassemna_esa5,
+                                                   ifelse(dados$missings_esa5 == 4, dados$somasemna_esa5 + 4*dados$mediassemna_esa5,
+                                                          ifelse(dados$missings_esa5 == 5, dados$somasemna_esa5 + 5*dados$mediassemna_esa5,
+                                                                 ifelse(dados$missings_esa5 == 6, dados$somasemna_esa5 + 6*dados$mediassemna_esa5,
+                                                                        ifelse(dados$missings_esa5 == 7, dados$somasemna_esa5 + 7*dados$mediassemna_esa5, NA))))))))
+
+### DESREGULAÇÃO EMOCIONAL:
+#imputação:
+
+#####Semana 0:
+dados$missings_ders0 = apply(dados[,c("sem0.ders.1", "sem0.ders.2", "sem0.ders.3", "sem0.ders.4", "sem0.ders.5", 
+                                      "sem0.ders.6", "sem0.ders.7", "sem0.ders.8", "sem0.ders.9", "sem0.ders.10",
+                                      "sem0.ders.11", "sem0.ders.12", "sem0.ders.13", "sem0.ders.14", "sem0.ders.15", 
+                                      "sem0.ders.16", "sem0.ders.17", "sem0.ders.18", "sem0.ders.19", "sem0.ders.20",
+                                      "sem0.ders.21", "sem0.ders.22", "sem0.ders.23", "sem0.ders.24", "sem0.ders.25", 
+                                      "sem0.ders.26", "sem0.ders.27", "sem0.ders.28", "sem0.ders.29", "sem0.ders.30",
+                                      "sem0.ders.31", "sem0.ders.32", "sem0.ders.33", "sem0.ders.34", "sem0.ders.35",
+                                      "sem0.ders.36")], 1, function(x) sum(is.na(x)))
+dados$somasemna_ders0 = apply(dados[,c("sem0.ders.1", "sem0.ders.2", "sem0.ders.3", "sem0.ders.4", "sem0.ders.5", 
+                                       "sem0.ders.6", "sem0.ders.7", "sem0.ders.8", "sem0.ders.9", "sem0.ders.10",
+                                       "sem0.ders.11", "sem0.ders.12", "sem0.ders.13", "sem0.ders.14", "sem0.ders.15", 
+                                       "sem0.ders.16", "sem0.ders.17", "sem0.ders.18", "sem0.ders.19", "sem0.ders.20",
+                                       "sem0.ders.21", "sem0.ders.22", "sem0.ders.23", "sem0.ders.24", "sem0.ders.25", 
+                                       "sem0.ders.26", "sem0.ders.27", "sem0.ders.28", "sem0.ders.29", "sem0.ders.30",
+                                       "sem0.ders.31", "sem0.ders.32", "sem0.ders.33", "sem0.ders.34", "sem0.ders.35",
+                                       "sem0.ders.36")], 1, function(x) sum(x,na.rm=T))
+dados$mediassemna_ders0 = apply(dados[,c("sem0.ders.1", "sem0.ders.2", "sem0.ders.3", "sem0.ders.4", "sem0.ders.5", 
+                                         "sem0.ders.6", "sem0.ders.7", "sem0.ders.8", "sem0.ders.9", "sem0.ders.10",
+                                         "sem0.ders.11", "sem0.ders.12", "sem0.ders.13", "sem0.ders.14", "sem0.ders.15", 
+                                         "sem0.ders.16", "sem0.ders.17", "sem0.ders.18", "sem0.ders.19", "sem0.ders.20",
+                                         "sem0.ders.21", "sem0.ders.22", "sem0.ders.23", "sem0.ders.24", "sem0.ders.25", 
+                                         "sem0.ders.26", "sem0.ders.27", "sem0.ders.28", "sem0.ders.29", "sem0.ders.30",
+                                         "sem0.ders.31", "sem0.ders.32", "sem0.ders.33", "sem0.ders.34", "sem0.ders.35",
+                                         "sem0.ders.36")], 1, function(x) mean(x,na.rm=T))
+dados$somafinal_ders0 = ifelse(dados$missings_ders0 == 0, dados$somasemna_ders0,
+                               ifelse(dados$missings_ders0 == 1, dados$somasemna_ders0 + dados$mediassemna_ders0, 
+                                      ifelse(dados$missings_ders0 == 2, dados$somasemna_ders0 + 2*dados$mediassemna_ders0,
+                                             ifelse(dados$missings_ders0 == 3, dados$somasemna_ders0 + 3*dados$mediassemna_ders0,
+                                                    ifelse(dados$missings_ders0 == 4, dados$somasemna_ders0 + 4*dados$mediassemna_ders0,
+                                                           ifelse(dados$missings_ders0 == 5, dados$somasemna_ders0 + 5*dados$mediassemna_ders0,
+                                                                  ifelse(dados$missings_ders0 == 6, dados$somasemna_ders0 + 6*dados$mediassemna_ders0,
+                                                                         ifelse(dados$missings_ders0 == 7, dados$somasemna_ders0 + 7*dados$mediassemna_ders0, NA))))))))
+
+
+#semana 8:
+dados$missings_ders8 = apply(dados[,c("sem8.ders.1", "sem8.ders.2", "sem8.ders.3", "sem8.ders.4", "sem8.ders.5", 
+                                      "sem8.ders.6", "sem8.ders.7", "sem8.ders.8", "sem8.ders.9", "sem8.ders.10",
+                                      "sem8.ders.11", "sem8.ders.12", "sem8.ders.13", "sem8.ders.14", "sem8.ders.15", 
+                                      "sem8.ders.16", "sem8.ders.17", "sem8.ders.18", "sem8.ders.19", "sem8.ders.20",
+                                      "sem8.ders.21", "sem8.ders.22", "sem8.ders.23", "sem8.ders.24", "sem8.ders.25", 
+                                      "sem8.ders.26", "sem8.ders.27", "sem8.ders.28", "sem8.ders.29", "sem8.ders.30",
+                                      "sem8.ders.31", "sem8.ders.32", "sem8.ders.33", "sem8.ders.34", "sem8.ders.35",
+                                      "sem8.ders.36")], 1, function(x) sum(is.na(x)))
+dados$somasemna_ders8 = apply(dados[,c("sem8.ders.1", "sem8.ders.2", "sem8.ders.3", "sem8.ders.4", "sem8.ders.5", 
+                                       "sem8.ders.6", "sem8.ders.7", "sem8.ders.8", "sem8.ders.9", "sem8.ders.10",
+                                       "sem8.ders.11", "sem8.ders.12", "sem8.ders.13", "sem8.ders.14", "sem8.ders.15", 
+                                       "sem8.ders.16", "sem8.ders.17", "sem8.ders.18", "sem8.ders.19", "sem8.ders.20",
+                                       "sem8.ders.21", "sem8.ders.22", "sem8.ders.23", "sem8.ders.24", "sem8.ders.25", 
+                                       "sem8.ders.26", "sem8.ders.27", "sem8.ders.28", "sem8.ders.29", "sem8.ders.30",
+                                       "sem8.ders.31", "sem8.ders.32", "sem8.ders.33", "sem8.ders.34", "sem8.ders.35",
+                                       "sem8.ders.36")], 1, function(x) sum(x,na.rm=T))
+dados$mediassemna_ders8 = apply(dados[,c("sem8.ders.1", "sem8.ders.2", "sem8.ders.3", "sem8.ders.4", "sem8.ders.5", 
+                                         "sem8.ders.6", "sem8.ders.7", "sem8.ders.8", "sem8.ders.9", "sem8.ders.10",
+                                         "sem8.ders.11", "sem8.ders.12", "sem8.ders.13", "sem8.ders.14", "sem8.ders.15", 
+                                         "sem8.ders.16", "sem8.ders.17", "sem8.ders.18", "sem8.ders.19", "sem8.ders.20",
+                                         "sem8.ders.21", "sem8.ders.22", "sem8.ders.23", "sem8.ders.24", "sem8.ders.25", 
+                                         "sem8.ders.26", "sem8.ders.27", "sem8.ders.28", "sem8.ders.29", "sem8.ders.30",
+                                         "sem8.ders.31", "sem8.ders.32", "sem8.ders.33", "sem8.ders.34", "sem8.ders.35",
+                                         "sem8.ders.36")], 1, function(x) mean(x,na.rm=T))
+dados$somafinal_ders8 = ifelse(dados$missings_ders8 == 0, dados$somasemna_ders8,
+                               ifelse(dados$missings_ders8 == 1, dados$somasemna_ders8 + dados$mediassemna_ders8, 
+                                      ifelse(dados$missings_ders8 == 2, dados$somasemna_ders8 + 2*dados$mediassemna_ders8,
+                                             ifelse(dados$missings_ders8 == 3, dados$somasemna_ders8 + 3*dados$mediassemna_ders8,
+                                                    ifelse(dados$missings_ders8 == 4, dados$somasemna_ders8 + 4*dados$mediassemna_ders8,
+                                                           ifelse(dados$missings_ders8 == 5, dados$somasemna_ders8 + 5*dados$mediassemna_ders8,
+                                                                  ifelse(dados$missings_ders8 == 6, dados$somasemna_ders8 + 6*dados$mediassemna_ders8,
+                                                                         ifelse(dados$missings_ders8 == 7, dados$somasemna_ders8 + 7*dados$mediassemna_ders8, NA))))))))
+
+### RUMINAÇÃO:
+#####Semana 0:
+
+#imputação:
+dados$missings_rrq0 = apply(dados[,c("sem0.rrq10.1", "sem0.rrq10.2", "sem0.rrq10.3", "sem0.rrq10.4",
+                                     "sem0.rrq10.5", "sem0.rrq10.6", "sem0.rrq10.7", "sem0.rrq10.8",
+                                     "sem0.rrq10.9", "sem0.rrq10.10")], 1, function(x) sum(is.na(x)))
+dados$somasemna_rrq0 = apply(dados[,c("sem0.rrq10.1", "sem0.rrq10.2", "sem0.rrq10.3", "sem0.rrq10.4",
+                                      "sem0.rrq10.5", "sem0.rrq10.6", "sem0.rrq10.7", "sem0.rrq10.8",
+                                      "sem0.rrq10.9", "sem0.rrq10.10")], 1, function(x) sum(x,na.rm=T))
+dados$mediassemna_rrq0 = apply(dados[,c("sem0.rrq10.1", "sem0.rrq10.2", "sem0.rrq10.3", "sem0.rrq10.4",
+                                        "sem0.rrq10.5", "sem0.rrq10.6", "sem0.rrq10.7", "sem0.rrq10.8",
+                                        "sem0.rrq10.9", "sem0.rrq10.10")], 1, function(x) mean(x,na.rm=T))
+dados$somafinal_rrq0 = ifelse(dados$missings_rrq0 == 0, dados$somasemna_rrq0,
+                              ifelse(dados$missings_rrq0 == 1, dados$somasemna_rrq0 + dados$mediassemna_rrq0, 
+                                     ifelse(dados$missings_rrq0 == 2, dados$somasemna_rrq0 + 2*dados$mediassemna_rrq0, NA)))
+#####Semana 5:
+
+#imputação:
+dados$missings_rrq5 = apply(dados[,c("sem5.rrq10.1", "sem5.rrq10.2", "sem5.rrq10.3", "sem5.rrq10.4",
+                                     "sem5.rrq10.5", "sem5.rrq10.6", "sem5.rrq10.7", "sem5.rrq10.8",
+                                     "sem5.rrq10.9", "sem5.rrq10.10")], 1, function(x) sum(is.na(x)))
+dados$somasemna_rrq5 = apply(dados[,c("sem5.rrq10.1", "sem5.rrq10.2", "sem5.rrq10.3", "sem5.rrq10.4",
+                                      "sem5.rrq10.5", "sem5.rrq10.6", "sem5.rrq10.7", "sem5.rrq10.8",
+                                      "sem5.rrq10.9", "sem5.rrq10.10")], 1, function(x) sum(x,na.rm=T))
+dados$mediassemna_rrq5 = apply(dados[,c("sem5.rrq10.1", "sem5.rrq10.2", "sem5.rrq10.3", "sem5.rrq10.4",
+                                        "sem5.rrq10.5", "sem5.rrq10.6", "sem5.rrq10.7", "sem5.rrq10.8",
+                                        "sem5.rrq10.9", "sem5.rrq10.10")], 1, function(x) mean(x,na.rm=T))
+dados$somafinal_rrq5 = ifelse(dados$missings_rrq5 == 0, dados$somasemna_rrq5,
+                              ifelse(dados$missings_rrq5 == 1, dados$somasemna_rrq5 + dados$mediassemna_rrq5, 
+                                     ifelse(dados$missings_rrq5 == 2, dados$somasemna_rrq5 + 2*dados$mediassemna_rrq5, NA)))
+
+
+### ESCALA DE HAMILTON (para medir a intensidade do TAG na semana 0):
+#####Semana 0:
+
+#imputação:
+dados$missings_hama0 = apply(dados[,c("sem0.hama.1", "sem0.hama.2", "sem0.hama.3", "sem0.hama.4", "sem0.hama.5", "sem0.hama.6", "sem0.hama.7",
+                                     "sem0.hama.8", "sem0.hama.9", "sem0.hama.10", "sem0.hama.11", "sem0.hama.12", "sem0.hama.13", "sem0.hama.14")], 1, function(x) sum(is.na(x)))
+dados$somasemna_hama0 = apply(dados[,c("sem0.hama.1", "sem0.hama.2", "sem0.hama.3", "sem0.hama.4", "sem0.hama.5", "sem0.hama.6", "sem0.hama.7",
+                                       "sem0.hama.8", "sem0.hama.9", "sem0.hama.10", "sem0.hama.11", "sem0.hama.12", "sem0.hama.13", "sem0.hama.14")], 1, function(x) sum(x,na.rm=T))
+dados$mediassemna_hama0 = apply(dados[,c("sem0.hama.1", "sem0.hama.2", "sem0.hama.3", "sem0.hama.4", "sem0.hama.5", "sem0.hama.6", "sem0.hama.7",
+                                         "sem0.hama.8", "sem0.hama.9", "sem0.hama.10", "sem0.hama.11", "sem0.hama.12", "sem0.hama.13", "sem0.hama.14")], 1, function(x) mean(x,na.rm=T))
+dados$somafinal_hama0 = ifelse(dados$missings_hama0 == 0, dados$somasemna_hama0,
+                              ifelse(dados$missings_hama0 == 1, dados$somasemna_hama0 + dados$mediassemna_hama0, 
+                                     ifelse(dados$missings_hama0 == 2, dados$somasemna_hama0 + 2*dados$mediassemna_hama0,
+                                            ifelse(dados$missings_hama0 == 3, dados$somasemna_hama0 + 3*dados$mediassemna_hama0, NA))))
+
+dados$sexo <- ifelse(dados$sexo == "F", 1, 0)
+dados$escolaridade <- ifelse(dados$escolaridade == 999, NA, dados$escolaridade)
+dados$psicoterapia <- ifelse(dados$psicoterapia == "nao", 0, 
+                             ifelse(dados$psicoterapia == "sim", 1, NA))
+
+
+###############################################################
+############## MODELOS COM ACEITAÇÃO E RUMINAÇÃO NO BASELINE: 
+# MODELO 1:
+
+## DESFECHO (Y) = DESREGULAÇÃO EMOCIONAL (SEMANA 8)
+## MEDIADOR (M) = ACEITAÇÃO (SEMANA 5)
+## EXPOSIÇÃO (X) = SENSIBILIDADE À ANSIEDADE (SEMANA 0)
+## COVARIÁVEIS: grupo de exposição + aceitação na semana 0 + tag na semana 0 + ders na semana 0
+
+dados_modelo_3 <- dados %>%
+  dplyr::filter(!is.na(somafinal_ders8) & !is.na(somafinal_esa0) &
+                  !is.na(somafinal_aaq0) & !is.na(somafinal_aaq5) & 
+                  !is.na(interv_grupo1) & !is.na(dados$interv_grupo2) &
+                  !is.na(interv_grupo3) & !is.na(somafinal_ders0) & !is.na(dados$somafinal_hama0) &
+                  !is.na(sexo) & !is.na(idade) & !is.na(escolaridade) & !is.na(psicoterapia))
+
+process(data = dados_modelo_3, y = "somafinal_ders8", x = c("somafinal_esa0"), 
+      m = c("somafinal_aaq5"), cov = c("interv_grupo1", "interv_grupo2", "somafinal_aaq0", "somafinal_ders0", "somafinal_hama0", "sexo", "idade", "escolaridade", "psicoterapia"), 
+      total = 1, contrast = 1, model = 4, modelres = 1, seed = 31216, covcoeff = 1, save = 1)
+
+# MODELO 4:
+
+## DESFECHO (Y) = DESREGULAÇÃO EMOCIONAL (SEMANA 8)
+## MEDIADOR (M) = ACEITAÇÃO (SEMANA 5)
+## EXPOSIÇÃO (X) = SENSIBILIDADE À ANSIEDADE (SEMANA 0)
+## COVARIÁVEIS: grupo de exposição + ruminação na semana 0 + ders na semana 0 + tag na semana 0
+
+dados_modelo_4 <- dados %>%
+  dplyr::filter(!is.na(somafinal_ders8) & !is.na(somafinal_esa0) &
+                  !is.na(dados$somafinal_rrq0) & !is.na(somafinal_rrq5) & 
+                  !is.na(dados$interv_grupo1) & !is.na(dados$interv_grupo2) &
+                  !is.na(dados$interv_grupo3) & !is.na(dados$somafinal_ders0) & !is.na(dados$somafinal_hama0) &
+                  !is.na(sexo) & !is.na(idade) & !is.na(escolaridade) & !is.na(psicoterapia))
+
+process(data = dados_modelo_4, y = "somafinal_ders8", x = c("somafinal_esa0"), 
+        m = c("somafinal_rrq5"), cov = c("interv_grupo1", "interv_grupo2", "somafinal_rrq0", "somafinal_ders0", "somafinal_hama0", "sexo", "idade", "escolaridade","psicoterapia"), 
+        total = 1, contrast = 1, model = 4, modelres = 1, seed = 31216, covcoeff = 1, save = 1)
+
+# MODELO 5:
+
+## DESFECHO (Y) = DESREGULAÇÃO EMOCIONAL
+## MEDIADOR (M) = SENSIBILIDADE À ANSIEDADE (SEMANA 5)
+## EXPOSIÇÃO (X) = GRUPOS DE INTERVENÇÃO
+## COVARIÁVEIS: sensibilidade à ansiedade na semana 0 + ders na semana 0 + tag na semana 0
+
+dados_modelo_5 <- dados %>%
+  dplyr::filter(!is.na(somafinal_ders8) & !is.na(interv_cat) &
+                  !is.na(somafinal_esa0) & !is.na(somafinal_esa5) & !is.na(somafinal_ders0) & !is.na(somafinal_hama0) &
+                  !is.na(sexo) & !is.na(idade) & !is.na(escolaridade) & !is.na(psicoterapia))
+
+dados_modelo_5$interv_cat <- as.numeric(dados_modelo_5$interv_cat)
+process(data = dados_modelo_5, y = "somafinal_ders8", x = "interv_cat" , 
+        m = c("somafinal_esa5"), cov = c("somafinal_esa0", "somafinal_ders0", "somafinal_hama0", "sexo", "idade", "escolaridade", "psicoterapia"), 
+        mcx = 1, total = 1, model = 4, modelres = 1, seed = 31216, covcoeff = 1, save = 1)
+
